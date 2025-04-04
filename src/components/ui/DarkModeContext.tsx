@@ -1,49 +1,72 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type DarkModeContextType = {
+interface DarkModeContextType {
   darkMode: boolean;
   toggleDarkMode: () => void;
-};
+}
 
-// Create context with default values
 const DarkModeContext = createContext<DarkModeContextType>({
   darkMode: false,
   toggleDarkMode: () => {},
 });
 
-// Custom hook to use the dark mode context
-export const useDarkMode = () => useContext(DarkModeContext);
-
-type DarkModeProviderProps = {
+interface DarkModeProviderProps {
   children: ReactNode;
-};
+}
 
 export const DarkModeProvider: React.FC<DarkModeProviderProps> = ({ children }) => {
-  // Initialize darkMode from localStorage or default to false
-  const [darkMode, setDarkMode] = useState(() => {
+  // Check for user preference or previously saved setting
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    // Check localStorage first
     const savedMode = localStorage.getItem('darkMode');
-    return savedMode ? savedMode === 'true' : false;
+    if (savedMode !== null) {
+      return savedMode === 'true';
+    }
+    
+    // Otherwise check system preference
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Toggle dark mode function
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
-  // Apply dark mode to document and save to localStorage when state changes
+  // Update localStorage when darkMode changes
   useEffect(() => {
+    localStorage.setItem('darkMode', darkMode.toString());
+    
+    // Apply dark mode class to document body
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    localStorage.setItem('darkMode', darkMode.toString());
   }, [darkMode]);
 
-  // Provide the dark mode context to all children
+  // Listen for system preference changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (localStorage.getItem('darkMode') === null) {
+        setDarkMode(e.matches);
+      }
+    };
+    
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } else {
+      // For older browsers
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    setDarkMode(prevMode => !prevMode);
+  };
+
   return (
     <DarkModeContext.Provider value={{ darkMode, toggleDarkMode }}>
       {children}
     </DarkModeContext.Provider>
   );
 };
+
+export const useDarkMode = () => useContext(DarkModeContext);

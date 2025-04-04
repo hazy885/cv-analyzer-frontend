@@ -4,6 +4,8 @@ import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Import from "./pages/Import";
 import Settings from "./pages/Setting";
+import Candidates from "./pages/Candidates";
+import Jobs from "./pages/Jobs";
 import { useDarkMode } from "./components/ui/DarkModeContext";
 // Import other pages like Candidates, Jobs, etc.
 
@@ -47,9 +49,8 @@ const AppContent = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
-            {/* Define other routes here */}
-            <Route path="/candidates" element={<div className="p-6"><h1 className="text-2xl font-bold">Candidates</h1></div>} />
-            <Route path="/jobs" element={<div className="p-6"><h1 className="text-2xl font-bold">Jobs</h1></div>} />
+            <Route path="/candidates" element={<Candidates />} />
+            <Route path="/jobs" element={<Jobs />} />
             <Route path="/calendar" element={<div className="p-6"><h1 className="text-2xl font-bold">Calendar</h1></div>} />
             <Route path="/reports" element={<div className="p-6"><h1 className="text-2xl font-bold">Reports</h1></div>} />
             <Route path="/import" element={<Import />} />

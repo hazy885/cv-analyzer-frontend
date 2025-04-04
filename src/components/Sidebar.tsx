@@ -63,12 +63,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     { name: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/dashboard" },
+    { name: "Import", icon: <FilePlus size={20} />, path: "/import" },
     { name: "Candidates", icon: <Users size={20} />, path: "/candidates" },
     { name: "Jobs", icon: <Briefcase size={20} />, path: "/jobs" },
     { name: "Calendar", icon: <Calendar size={20} />, path: "/calendar" },
     { name: "Reports", icon: <BarChart size={20} />, path: "/reports" },
     { name: "Settings", icon: <Settings size={20} />, path: "/settings" },
-    { name: "Import", icon: <FilePlus size={20} />, path: "/import" } 
   ];
 
   return (
@@ -82,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className={`flex ${collapsed ? "justify-center" : "justify-between"} items-center p-4 border-b ${
         darkMode ? "border-gray-700" : "border-gray-200"
       }`}>
-        {!collapsed && <h2 className={`font-bold text-lg ${darkMode ? "text-blue-400" : "text-blue-600"}`}>Recruit<span className="font-extrabold">CRM</span></h2>}
+        {!collapsed && <h2 className={`font-bold text-lg ${darkMode ? "text-blue-400" : "text-blue-600"}`}>ARAS <span className="font-extrabold">AI</span></h2>}
         {collapsed && <div className={`font-bold text-2xl ${darkMode ? "text-blue-400" : "text-blue-600"}`}>R</div>}
         <button 
           onClick={() => setCollapsed(!collapsed)}
