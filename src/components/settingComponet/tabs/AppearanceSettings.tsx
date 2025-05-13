@@ -1,8 +1,6 @@
-// src/components/settings/tabs/AppearanceSettings.tsx
 import React from 'react';
 import { Eye, Sun, Moon, Monitor, CloudOff } from 'lucide-react';
 import SettingsHeader from '../ui/SettingsHeader';
-import SettingsCard from '../ui/SettingsCard';
 import ToggleSwitch from '../ui/ToggleSwitch';
 import ColorOption from '../ui/ColorOption';
 import { DisplaySettings } from '../types/settings';
@@ -23,7 +21,7 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
   const colorOptions = ['blue', 'purple', 'green', 'orange', 'red', 'teal', 'gray'];
   
   return (
-    <div className="animate-fadeIn">
+    <div>
       <SettingsHeader 
         icon={<Eye />} 
         title="Appearance & Display" 
@@ -33,16 +31,16 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
       <div className="space-y-8">
         {/* Theme */}
         <div>
-          <h3 className="font-medium mb-4 text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400">Theme</h3>
+          <h3 className={`font-medium mb-4 text-sm uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Theme</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <button 
               onClick={() => handleThemeChange('light')}
               className={`p-6 rounded-xl flex flex-col items-center gap-4 transition-all duration-200 ${
                 displaySettings.theme === 'light' 
-                  ? 'bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-700 ring-2 ring-blue-500 shadow-md shadow-blue-500/20' 
+                  ? 'bg-blue-50 text-blue-700 border-2 border-blue-500 shadow-md' 
                   : darkMode 
-                    ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-300'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
               }`}
             >
               <div className={`p-3 rounded-full ${
@@ -57,14 +55,14 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               onClick={() => handleThemeChange('dark')}
               className={`p-6 rounded-xl flex flex-col items-center gap-4 transition-all duration-200 ${
                 displaySettings.theme === 'dark' 
-                  ? 'bg-gradient-to-br from-indigo-900/50 to-blue-800/40 text-blue-300 ring-2 ring-blue-500 shadow-md shadow-blue-500/10' 
+                  ? 'bg-gray-800 text-blue-400 border-2 border-blue-500 shadow-md' 
                   : darkMode 
-                    ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-300'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
               }`}
             >
               <div className={`p-3 rounded-full ${
-                displaySettings.theme === 'dark' ? 'bg-gray-800 shadow-inner' : darkMode ? 'bg-gray-800' : 'bg-gray-200'
+                displaySettings.theme === 'dark' ? 'bg-gray-700 shadow-inner' : darkMode ? 'bg-gray-800' : 'bg-gray-200'
               }`}>
                 <Moon size={24} className={displaySettings.theme === 'dark' ? "text-blue-400" : ""} />
               </div>
@@ -76,16 +74,16 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               className={`p-6 rounded-xl flex flex-col items-center gap-4 transition-all duration-200 ${
                 displaySettings.theme === 'system'
                   ? (darkMode 
-                      ? 'bg-gradient-to-br from-indigo-900/50 to-blue-800/40 text-blue-300 ring-2 ring-blue-500 shadow-md' 
-                      : 'bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-700 ring-2 ring-blue-500 shadow-md')
+                      ? 'bg-gray-800 text-blue-400 border-2 border-blue-500 shadow-md' 
+                      : 'bg-blue-50 text-blue-700 border-2 border-blue-500 shadow-md')
                   : (darkMode 
-                      ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-300'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700')
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200')
               }`}
             >
               <div className={`p-3 rounded-full ${
                 displaySettings.theme === 'system' 
-                  ? (darkMode ? 'bg-gray-800 shadow-inner' : 'bg-white shadow-inner')
+                  ? (darkMode ? 'bg-gray-700 shadow-inner' : 'bg-white shadow-inner')
                   : (darkMode ? 'bg-gray-800' : 'bg-gray-200')
               }`}>
                 <Monitor size={24} className={displaySettings.theme === 'system' ? (darkMode ? "text-blue-400" : "text-blue-500") : ""} />
@@ -97,7 +95,7 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
         
         {/* Density */}
         <div>
-          <h3 className="font-medium mb-4 text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400">Density</h3>
+          <h3 className={`font-medium mb-4 text-sm uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Density</h3>
           <div className="flex flex-wrap gap-4">
             {["compact", "default", "comfortable"].map((density) => (
               <button 
@@ -106,10 +104,10 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                 className={`py-3 px-4 rounded-lg transition-all duration-200 min-w-[120px] ${
                   displaySettings.density === density
                     ? (darkMode 
-                        ? 'bg-blue-900/40 text-blue-300 border border-blue-700 shadow-lg shadow-blue-800/10' 
-                        : 'bg-blue-50 text-blue-700 border border-blue-200 shadow-lg shadow-blue-100')
+                        ? 'bg-blue-900/40 text-blue-300 border border-blue-700 shadow-md' 
+                        : 'bg-blue-50 text-blue-700 border border-blue-200 shadow-md')
                     : (darkMode 
-                        ? 'bg-gray-700/50 hover:bg-gray-700 border border-gray-600' 
+                        ? 'bg-gray-700 hover:bg-gray-600 border border-gray-600' 
                         : 'bg-gray-100 hover:bg-gray-200 border border-gray-200')
                 }`}
               >
@@ -121,7 +119,7 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
         
         {/* Color Scheme */}
         <div>
-          <h3 className="font-medium mb-4 text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400">Color Scheme</h3>
+          <h3 className={`font-medium mb-4 text-sm uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Color Scheme</h3>
           <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
             {colorOptions.map(color => (
               <ColorOption
@@ -137,7 +135,7 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
         
         {/* Other display options */}
         <div>
-          <h3 className="font-medium mb-4 text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400">Other Options</h3>
+          <h3 className={`font-medium mb-4 text-sm uppercase tracking-wider ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Other Options</h3>
           
           <div className="space-y-4">
             <ToggleSwitch
@@ -158,8 +156,8 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               </div>
               <button className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm ${
                 darkMode 
-                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
               }`}>
                 <CloudOff size={16} />
                 Configure

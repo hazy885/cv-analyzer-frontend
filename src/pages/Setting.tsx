@@ -1,4 +1,3 @@
-// src/pages/Settings.tsx
 import React, { useState, useEffect } from 'react';
 import { useDarkMode } from '../components/ui/DarkModeContext';
 import { Bell, UserCircle, Shield, Eye, Globe, Mail, Database } from 'lucide-react';
@@ -10,7 +9,8 @@ import SettingsLayout from '../components/settingComponet/layouts/SettingsLayout
 import AccountSettings from '../components/settingComponet/tabs/AccountSettings';
 import AppearanceSettings from '../components/settingComponet/tabs/AppearanceSettings';
 import NotificationSettings from '../components/settingComponet/tabs/NotificationSettings';
-// Import other tab components as needed
+import PrivacySettings from '../components/settingComponet/tabs/PrivacySettings';
+import LanguageSettings from '../components/settingComponet/tabs/LanguageSettings';
 
 // UI Components
 import SaveButton from '../components/settingComponet/ui/SaveButton';
@@ -21,18 +21,13 @@ import {
   UserProfile, 
   NotificationSetting,
   DisplaySettings,
-  LanguageSettings,
-  PrivacySettings,
+  LanguageSettings as LanguageSettingsType,
+  PrivacySettings as PrivacySettingsType,
   LinkedAccount
 } from '../components/settingComponet/types/settings';
 
-export interface DarkModeContextType {
-  darkMode: boolean;
-  setDarkMode: (value: boolean) => void;
-}
-
-const Settings: React.FC = () => {
-  const { darkMode, setDarkMode } = useDarkMode();
+const Setting: React.FC = () => {
+  const { darkMode, toggleDarkMode } = useDarkMode();
   const [activeTab, setActiveTab] = useState('account');
   const [statusMessage, setStatusMessage] = useState('');
   const [statusType, setStatusType] = useState<'success' | 'loading' | 'error' | 'info'>('success');
@@ -119,7 +114,7 @@ const Settings: React.FC = () => {
   });
   
   // Language settings state
-  const [languageSettings, setLanguageSettings] = useState<LanguageSettings>({
+  const [languageSettings, setLanguageSettings] = useState<LanguageSettingsType>({
     language: 'english',
     timezone: 'Pacific Time (UTC-08:00)',
     dateFormat: 'MM/DD/YYYY',
@@ -127,7 +122,7 @@ const Settings: React.FC = () => {
   });
   
   // Privacy settings state
-  const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
+  const [privacySettings, setPrivacySettings] = useState<PrivacySettingsType>({
     twoFactorEnabled: false,
     activityLogging: true,
     dataSharingConsent: true,
@@ -171,13 +166,13 @@ const Settings: React.FC = () => {
   };
 
   // Update language settings
-  const updateLanguageSettings = (settings: Partial<LanguageSettings>) => {
-    setLanguageSettings((prev: LanguageSettings) => ({ ...prev, ...settings }));
+  const updateLanguageSettings = (settings: Partial<LanguageSettingsType>) => {
+    setLanguageSettings((prev: LanguageSettingsType) => ({ ...prev, ...settings }));
   };
 
   // Update privacy settings
-  const updatePrivacySettings = (settings: Partial<PrivacySettings>) => {
-    setPrivacySettings((prev: PrivacySettings) => ({ ...prev, ...settings }));
+  const updatePrivacySettings = (settings: Partial<PrivacySettingsType>) => {
+    setPrivacySettings((prev: PrivacySettingsType) => ({ ...prev, ...settings }));
   };
 
   // Handle theme change
@@ -185,9 +180,11 @@ const Settings: React.FC = () => {
     updateDisplaySettings({ theme });
     
     // If 'system', we would typically check system preference here
-    // For simplicity, we're just using the current state for 'system'
+    // For simplicity, we're just toggling dark mode
     if (theme !== 'system') {
-      setDarkMode(theme === 'dark');
+      if ((theme === 'dark' && !darkMode) || (theme === 'light' && darkMode)) {
+        toggleDarkMode();
+      }
     }
   };
 
@@ -242,7 +239,29 @@ const Settings: React.FC = () => {
         />
       )}
       
-      {/* Add other tab content components here */}
+      {activeTab === 'notifications' && (
+        <NotificationSettings
+          settings={notificationSettings}
+          toggleNotification={toggleNotification}
+          darkMode={darkMode}
+        />
+      )}
+      
+      {activeTab === 'privacy' && (
+        <PrivacySettings
+          privacySettings={privacySettings}
+          updatePrivacySettings={updatePrivacySettings}
+          darkMode={darkMode}
+        />
+      )}
+      
+      {activeTab === 'language' && (
+        <LanguageSettings
+          languageSettings={languageSettings}
+          updateLanguageSettings={updateLanguageSettings}
+          darkMode={darkMode}
+        />
+      )}
       
       {/* Save Button (common across all tabs) */}
       <SaveButton 
@@ -255,4 +274,4 @@ const Settings: React.FC = () => {
   );
 };
 
-export default Settings;
+export default Setting;

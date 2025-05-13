@@ -1,20 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { useDarkMode } from "../components/ui/DarkModeContext"; 
-import FilterPanel from "../components/dashboard/FilterPanel";
-import { Header } from "../components/dashboard/Navbar";
-import { CandidateGrid } from "../components/dashboard/CandidateGrid";
-import { CandidateList } from "../components/dashboard/CandidateList";
-import TopCandidateRanking from "../components/dashboard/TopCandidateRanking";
-import { candidates } from "../data"; // Import the sample data
-import { 
-  Users, UserCheck, Award, Briefcase, TrendingUp, ChevronRight, 
-  Clock, Calendar, Target, Mail, Filter, Zap, Cpu, Search,
-  Layout, Grid, List, Sliders, ChevronDown, Sparkles
-} from "lucide-react";
+import { Sliders, ChevronDown } from "lucide-react";
 
-// Define interfaces to match what TopCandidateRanking expects
+// Components
+import Header from "../components/dashboard/Navbar";
+import FilterPanel from "../components/dashboard/FilterPanel";
+import CandidateGrid from "../components/dashboard/CandidateGrid";
+import CandidateList from "../components/dashboard/CandidateList";
+import TopCandidateRanking from "../components/dashboard/TopCandidateRanking";
+import DashboardStats from "../components/dashboard/DashboardStats";
+import AIInsightCard from "../components/dashboard/AIInsightCard";
+import DashboardTabs from "../components/dashboard/DashboardTabs";
+import PeriodSelector from "../components/dashboard/PeriodSelector";
+import ViewControls from "../components/dashboard/ViewControls";
+import ResultsHeader from "../components/dashboard/ResultsHeader";
+
+// Sample data
+import { candidates } from "../data";
+
+// Define interfaces
 interface Candidate {
-  id: number;
+  id: number | string;
   name: string;
   role: string;
   experience: number;
@@ -66,20 +72,15 @@ const Dashboard: React.FC = () => {
   // Use dark mode from context
   const { darkMode, toggleDarkMode } = useDarkMode();
   
+  // State management
   const [filters, setFilters] = useState({
     experience: "all",
     status: "all",
     search: "",
     minSalary: 0,
-    role: "all",
-    location: "",
-    jobType: "all",
+    location: "all",
     skills: [],
-    education: "all",
-    source: "all",
-    dateRange: "anytime",
-    availability: "all",
-    rating: 0
+    education: "all"
   });
 
   const [layout, setLayout] = useState("grid");
@@ -98,9 +99,9 @@ const Dashboard: React.FC = () => {
     hired: 0
   });
 
-  // Transform original candidates data to ensure each candidate has role and correct properties
+  // Transform original candidates data
   const enhancedCandidates: Candidate[] = candidates.map((candidate, index) => ({
-    id: candidate.id !== undefined ? candidate.id : index + 1, // Ensure unique IDs
+    id: candidate.id !== undefined ? candidate.id : index + 1,
     name: candidate.name || "Unknown",
     role: candidate.skills?.includes("React") 
       ? "Frontend Developer" 
@@ -121,8 +122,8 @@ const Dashboard: React.FC = () => {
     lastActive: candidate.lastActive || "2 days ago"
   }));
 
+  // Calculate dashboard statistics
   useEffect(() => {
-    // Calculate dashboard statistics when candidates change
     setDashboardStats({
       total: enhancedCandidates.length,
       active: enhancedCandidates.filter(c => c.status.toLowerCase() === "active").length,
@@ -133,19 +134,25 @@ const Dashboard: React.FC = () => {
     });
   }, [enhancedCandidates]);
 
-  // Filter logic with enhanced filters
+  // Filter logic
   const filteredCandidates = enhancedCandidates
     .filter((candidate) => {
-      // Basic filters from original code
-      if (filters.experience === "5+" && candidate.experience < 5) return false;
-      if (filters.experience === "3-" && candidate.experience >= 3) return false;
+      // Basic filters
+      if (filters.experience !== "all") {
+        if (filters.experience === "0-1" && candidate.experience > 1) return false;
+        if (filters.experience === "1-3" && (candidate.experience < 1 || candidate.experience > 3)) return false;
+        if (filters.experience === "3-5" && (candidate.experience < 3 || candidate.experience > 5)) return false;
+        if (filters.experience === "5-10" && (candidate.experience < 5 || candidate.experience > 10)) return false;
+        if (filters.experience === "10+" && candidate.experience < 10) return false;
+      }
+      
       if (filters.status !== "all" && candidate.status.toLowerCase() !== filters.status.toLowerCase()) return false;
       if (filters.search && !candidate.name.toLowerCase().includes(filters.search.toLowerCase())) return false;
       if (candidate.salary < filters.minSalary) return false;
       
-      // New enhanced filters
-      if (filters.role !== "all" && !candidate.role.toLowerCase().includes(filters.role.toLowerCase())) return false;
-      if (filters.location && !candidate.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
+      // Location filter
+      if (filters.location && filters.location !== "all" && 
+          !candidate.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
       
       // Skills filtering
       if (filters.skills.length > 0) {
@@ -156,6 +163,9 @@ const Dashboard: React.FC = () => {
         );
         if (!hasRequiredSkills) return false;
       }
+      
+      // Education filter
+      if (filters.education && filters.education !== "all") return false;
       
       // Tab filtering
       if (activeTab !== "all" && candidate.status.toLowerCase() !== activeTab) return false;
@@ -179,7 +189,7 @@ const Dashboard: React.FC = () => {
       return 0;
     });
 
-  // Calculate match score once (deterministically) and cache the results
+  // Calculate match score
   const calculateMatchScore = (candidate: Candidate, position: Position): number => {
     let score = 0;
     
@@ -218,7 +228,7 @@ const Dashboard: React.FC = () => {
     }
     
     // Use a consistent seed instead of random to avoid unexpected changes
-    const seedValue = candidate.id * 100 + position.id;
+    const seedValue = Number(candidate.id) * 100 + position.id;
     const pseudoRandom = (seedValue % 10); // 0-9 range
     
     return Math.min(score + pseudoRandom, 100);
@@ -230,7 +240,7 @@ const Dashboard: React.FC = () => {
     matchScore: calculateMatchScore(candidate, selectedPosition)
   }));
 
-  // Get top 5 candidates ranked by match score
+  // Get top candidates ranked by match score
   const rankedCandidates = [...candidatesWithScores]
     .sort((a, b) => b.matchScore - a.matchScore)
     .slice(0, 3); 
@@ -243,17 +253,6 @@ const Dashboard: React.FC = () => {
   // Handle period change for analytics
   const handlePeriodChange = (period: string) => {
     setActivityPeriod(period);
-  };
-
-  // Function to get status color
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active": return "bg-green-500";
-      case "interviewing": return "bg-blue-500";
-      case "hired": return "bg-purple-500";
-      case "inactive": return "bg-gray-400";
-      default: return "bg-gray-400";
-    }
   };
 
   // Toggle filters visibility
@@ -271,6 +270,7 @@ const Dashboard: React.FC = () => {
         darkMode={darkMode}
         setDarkMode={toggleDarkMode}
         setFilters={setFilters}
+        toggleFilterPanel={toggleFilterPanel}
       />
       
       <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
@@ -286,217 +286,21 @@ const Dashboard: React.FC = () => {
               Manage candidates, track applications, and find perfect matches
             </p>
           </div>
-          
-          {/* Search Bar */}
-          <div className={`relative flex-shrink-0 w-full md:w-auto min-w-64 ${
-            darkMode ? "text-gray-300" : "text-gray-700"
-          }`}>
-            <input
-              type="text"
-              placeholder="Search candidates..."
-              value={filters.search}
-              onChange={(e) => setFilters({...filters, search: e.target.value})}
-              className={`w-full pl-10 pr-4 py-2 rounded-xl border focus:ring-2 focus:outline-none transition-all duration-200 ${
-                darkMode 
-                  ? "bg-gray-800 border-gray-700 focus:ring-blue-500/40 focus:border-blue-500" 
-                  : "bg-white border-gray-200 focus:ring-blue-500/30 focus:border-blue-500"
-              }`}
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          </div>
         </div>
       
-        {/* Dashboard Analytics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <div className={`p-5 rounded-xl ${
-            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
-          } transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Total Candidates
-                </p>
-                <h3 className="text-2xl font-bold mt-1">{dashboardStats.total}</h3>
-              </div>
-              <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
-                <Users className="h-5 w-5 text-blue-500" />
-              </div>
-            </div>
-            <div className={`mt-2 text-xs ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              <span className="inline-flex items-center text-green-500">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                12% growth
-              </span> from last {activityPeriod}
-            </div>
-          </div>
-          
-          <div className={`p-5 rounded-xl ${
-            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
-          } transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Active Candidates
-                </p>
-                <h3 className="text-2xl font-bold mt-1">{dashboardStats.active}</h3>
-              </div>
-              <div className={`p-2 rounded-lg ${darkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
-                <UserCheck className="h-5 w-5 text-green-500" />
-              </div>
-            </div>
-            <div className={`mt-2 text-xs ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              <span className="inline-flex items-center text-green-500">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                8% growth
-              </span> from last {activityPeriod}
-            </div>
-          </div>
-          
-          <div className={`p-5 rounded-xl ${
-            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
-          } transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Senior Candidates
-                </p>
-                <h3 className="text-2xl font-bold mt-1">{dashboardStats.senior}</h3>
-              </div>
-              <div className={`p-2 rounded-lg ${darkMode ? 'bg-amber-900/30' : 'bg-amber-100'}`}>
-                <Award className="h-5 w-5 text-amber-500" />
-              </div>
-            </div>
-            <div className={`mt-2 text-xs ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              <span className={`inline-flex items-center ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-                <Briefcase className="h-3 w-3 mr-1" />
-                5+ years experience
-              </span>
-            </div>
-          </div>
-          
-          <div className={`p-5 rounded-xl ${
-            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
-          } transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  New Applications
-                </p>
-                <h3 className="text-2xl font-bold mt-1">{dashboardStats.newThisWeek}</h3>
-              </div>
-              <div className={`p-2 rounded-lg ${darkMode ? 'bg-indigo-900/30' : 'bg-indigo-100'}`}>
-                <Calendar className="h-5 w-5 text-indigo-500" />
-              </div>
-            </div>
-            <div className={`mt-2 text-xs ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              <span className="inline-flex items-center text-indigo-500">
-                <Clock className="h-3 w-3 mr-1" />
-                This {activityPeriod}
-              </span>
-            </div>
-          </div>
-          
-          <div className={`p-5 rounded-xl ${
-            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
-          } transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Interviews
-                </p>
-                <h3 className="text-2xl font-bold mt-1">{dashboardStats.interviews}</h3>
-              </div>
-              <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
-                <Target className="h-5 w-5 text-blue-500" />
-              </div>
-            </div>
-            <div className={`mt-2 text-xs ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              <span className={`inline-flex items-center ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                <Clock className="h-3 w-3 mr-1" />
-                {Math.round(dashboardStats.interviews * 0.35)} scheduled today
-              </span>
-            </div>
-          </div>
-          
-          <div className={`p-5 rounded-xl ${
-            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-100'
-          } transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Hired
-                </p>
-                <h3 className="text-2xl font-bold mt-1">{dashboardStats.hired}</h3>
-              </div>
-              <div className={`p-2 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
-                <Mail className="h-5 w-5 text-purple-500" />
-              </div>
-            </div>
-            <div className={`mt-2 text-xs ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              <span className="inline-flex items-center text-purple-500">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                15% growth
-              </span> from last {activityPeriod}
-            </div>
-          </div>
-        </div>
+        {/* Dashboard Stats */}
+        <DashboardStats 
+          stats={dashboardStats} 
+          darkMode={darkMode} 
+          activityPeriod={activityPeriod} 
+        />
           
         {/* AI Assistant Card */}
-        <div className={`mb-8 p-5 rounded-xl shadow-lg ${
-          darkMode ? 
-            'bg-gradient-to-br from-blue-900/40 to-indigo-900/30 border border-blue-900/40' : 
-            'bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200'
-        } overflow-hidden relative`}>
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 rounded-full bg-blue-500/10 blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-28 h-28 rounded-full bg-indigo-500/10 blur-3xl"></div>
-          
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-5 relative z-10">
-            <div className={`p-3 rounded-xl ${darkMode ? 'bg-blue-900/40 border border-blue-800/50' : 'bg-blue-100 border border-blue-200'}`}>
-              <Sparkles className="h-7 w-7 text-blue-500" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-xl">AI Recruitment Assistant</h3>
-              <p className={`text-sm mt-2 md:max-w-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                Our AI has analyzed your candidate pool and found <span className="font-medium">{rankedCandidates.length} strong matches</span> for the {selectedPosition.title} position based on skills, experience, and availability.
-              </p>
-              
-              <div className="mt-3 flex flex-wrap gap-2">
-                {selectedPosition.requiredSkills?.map((skill, index) => (
-                  <span key={index} className={`text-xs px-2 py-1 rounded-full ${
-                    darkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700'
-                  }`}>
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="mt-4 md:mt-0">
-              <button 
-                className={`px-4 py-2 rounded-lg text-sm font-medium 
-                  ${darkMode 
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20' 
-                    : 'bg-blue-500 hover:bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                  } transition-all duration-200 flex items-center gap-1.5 hover:scale-105`}
-              >
-                <Zap className="h-4 w-4" />
-                <span>See AI Insights</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <AIInsightCard 
+          selectedPosition={selectedPosition} 
+          matchCount={rankedCandidates.length} 
+          darkMode={darkMode} 
+        />
           
         {/* Top Candidates Ranking Section */}
         <TopCandidateRanking
@@ -507,262 +311,70 @@ const Dashboard: React.FC = () => {
           positions={positions}
         />
         
-        {/* Tabs and Controls Bar */}
+        {/* Divider */}
         <div className="mb-6 bg-gradient-to-r from-transparent via-gray-200/10 to-transparent h-px"></div>
         
+        {/* Tabs and Controls Bar */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           {/* Tabs for quick status filtering */}
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => handleTabChange("all")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === "all"
-                  ? darkMode
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/10" 
-                    : "bg-blue-500 text-white shadow-md shadow-blue-500/20"
-                  : darkMode
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700" 
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
-              }`}
-            >
-              All Candidates
-            </button>
-            <button
-              onClick={() => handleTabChange("active")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === "active"
-                  ? darkMode
-                    ? "bg-green-600 text-white shadow-md shadow-green-500/10"
-                    : "bg-green-500 text-white shadow-md shadow-green-500/20"
-                  : darkMode
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700" 
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
-              }`}
-            >
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span>Active</span>
-              </div>
-            </button>
-            <button
-              onClick={() => handleTabChange("interviewing")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === "interviewing"
-                  ? darkMode
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/10"
-                    : "bg-blue-500 text-white shadow-md shadow-blue-500/20"
-                  : darkMode
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700" 
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
-              }`}
-            >
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                <span>Interviewing</span>
-              </div>
-            </button>
-            <button
-              onClick={() => handleTabChange("hired")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === "hired"
-                  ? darkMode
-                    ? "bg-purple-600 text-white shadow-md shadow-purple-500/10"
-                    : "bg-purple-500 text-white shadow-md shadow-purple-500/20"
-                  : darkMode
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700" 
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
-              }`}
-            >
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-purple-500"></div>
-                <span>Hired</span>
-              </div>
-            </button>
-          </div>
+          <DashboardTabs 
+            activeTab={activeTab} 
+            handleTabChange={handleTabChange} 
+            darkMode={darkMode} 
+          />
           
           {/* Activity period selector */}
-          <div>
-            <div className={`flex p-1 rounded-lg ${darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200 shadow-sm"}`}>
-              <button
-                onClick={() => handlePeriodChange("day")}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                  activityPeriod === "day"
-                    ? darkMode
-                      ? "bg-gray-700 text-white"
-                      : "bg-gray-100 text-gray-800"
-                    : ""
-                }`}
-              >
-                Day
-              </button>
-              <button
-                onClick={() => handlePeriodChange("week")}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                  activityPeriod === "week"
-                    ? darkMode
-                      ? "bg-gray-700 text-white"
-                      : "bg-gray-100 text-gray-800"
-                    : ""
-                }`}
-              >
-                Week
-              </button>
-              <button
-                onClick={() => handlePeriodChange("month")}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                  activityPeriod === "month"
-                    ? darkMode
-                      ? "bg-gray-700 text-white"
-                      : "bg-gray-100 text-gray-800"
-                    : ""
-                }`}
-              >
-                Month
-              </button>
-              <button
-                onClick={() => handlePeriodChange("year")}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                  activityPeriod === "year"
-                    ? darkMode
-                      ? "bg-gray-700 text-white"
-                      : "bg-gray-100 text-gray-800"
-                    : ""
-                }`}
-              >
-                Year
-              </button>
-            </div>
-          </div>
+          <PeriodSelector 
+            activityPeriod={activityPeriod} 
+            handlePeriodChange={handlePeriodChange} 
+            darkMode={darkMode} 
+          />
         </div>
         
         {/* View & Filter Controls */}
         <div className="flex flex-col md:flex-row justify-between items-stretch gap-4 mb-6">
           {/* View Controls */}
-          <div className={`flex items-center p-1.5 rounded-lg ${
-            darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200 shadow-sm"
-          }`}>
-            <button
-              onClick={() => setLayout("grid")}
-              className={`flex items-center px-3 py-1.5 rounded-md text-sm transition-all duration-200 ${
-                layout === "grid"
-                  ? darkMode
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-100 text-gray-800"
-                  : ""
-              }`}
-            >
-              <Grid className="h-4 w-4 mr-1.5" />
-              Grid
-            </button>
-            <button
-              onClick={() => setLayout("list")}
-              className={`flex items-center px-3 py-1.5 rounded-md text-sm transition-all duration-200 ${
-                layout === "list"
-                  ? darkMode
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-100 text-gray-800"
-                  : ""
-              }`}
-            >
-              <List className="h-4 w-4 mr-1.5" />
-              List
-            </button>
-          </div>
+          <ViewControls 
+            layout={layout} 
+            setLayout={setLayout} 
+            darkMode={darkMode} 
+          />
           
-          {/* Filter and Sort */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Filter Button */}
-            <button
-              onClick={toggleFilterPanel}
-              className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                darkMode
-                  ? "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
-                  : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm"
-              }`}
-            >
-              <Sliders className="h-4 w-4 mr-2" />
-              <span>Filters</span>
-              <ChevronDown className={`h-4 w-4 ml-2 transition-transform duration-200 ${showFilterPanel ? "rotate-180" : "rotate-0"}`} />
-            </button>
-            
-            {/* Sort Controls */}
-            <div className="flex items-center gap-2">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className={`px-3 py-2 rounded-lg text-sm ${
-                  darkMode
-                    ? "bg-gray-800 text-white border-gray-700"
-                    : "bg-white text-gray-700 border-gray-200"
-                } border focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-shadow duration-200`}
-              >
-                <option value="name">Sort by Name</option>
-                <option value="experience">Sort by Experience</option>
-                <option value="matchScore">Sort by Match Score</option>
-              </select>
-              
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className={`px-3 py-2 rounded-lg text-sm ${
-                  darkMode
-                    ? "bg-gray-800 text-white border-gray-700"
-                    : "bg-white text-gray-700 border-gray-200"
-                } border focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-shadow duration-200`}
-              >
-                <option value="asc">Ascending</option>
-                <option value="desc">Descending</option>
-              </select>
-            </div>
-          </div>
+          {/* Filter Button */}
+          <button
+            onClick={toggleFilterPanel}
+            className={`flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              darkMode
+                ? "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+                : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm"
+            }`}
+          >
+            <Sliders className="h-4 w-4 mr-2" />
+            <span>Filters</span>
+            <ChevronDown className={`h-4 w-4 ml-2 transition-transform duration-200 ${showFilterPanel ? "rotate-180" : "rotate-0"}`} />
+          </button>
         </div>
         
         {/* Expanded Filter Panel */}
         {showFilterPanel && (
-          <div className={`mb-6 p-4 rounded-xl ${
-            darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200 shadow-md"
-          } transition-all duration-300`}>
+          <div className="mb-6">
             <FilterPanel
               filters={filters}
               setFilters={setFilters}
               darkMode={darkMode}
               layout={layout}
               setLayout={setLayout}
+              resultCount={filteredCandidates.length}
             />
           </div>
         )}
           
-        {/* Results Count */}
-        <div className={`flex flex-wrap items-center justify-between mb-5 px-4 py-3 rounded-lg ${
-          darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200 shadow-sm'
-        }`}>
-          <div className="flex items-center gap-2">
-            <Filter className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-            <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Showing <span className="font-medium">{filteredCandidates.length}</span> of <span className="font-medium">{enhancedCandidates.length}</span> candidates
-            </span>
-          </div>
-          
-          {/* Status Legend */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-green-500"></div>
-              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Active</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Interviewing</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-purple-500"></div>
-              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Hired</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-gray-400"></div>
-              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Inactive</span>
-            </div>
-          </div>
-        </div>
+        {/* Results Header */}
+        <ResultsHeader 
+          filteredCount={filteredCandidates.length} 
+          totalCount={enhancedCandidates.length} 
+          darkMode={darkMode} 
+        />
           
         {/* Candidate Display */}
         {layout === "grid" ? (

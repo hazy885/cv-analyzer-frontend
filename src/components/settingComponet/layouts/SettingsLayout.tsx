@@ -1,4 +1,3 @@
-// src/components/settings/layout/SettingsLayout.tsx
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { fadeAnimations } from '../utils/animations';
@@ -36,7 +35,7 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
 }) => {
   return (
     <div className={`min-h-screen transition-colors duration-200 ${
-      darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'
+      darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'
     }`}>
       <style>{fadeAnimations}</style>
       
@@ -54,10 +53,8 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
           </button>
           
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold flex items-center">
-              <span className="bg-gradient-to-r from-blue-500 to-indigo-600 text-transparent bg-clip-text">
-                {title}
-              </span>
+            <h1 className="text-2xl sm:text-3xl font-medium">
+              {title}
             </h1>
             {subtitle && (
               <p className={`mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -97,8 +94,8 @@ const SettingsLayout: React.FC<SettingsLayoutProps> = ({
 
           {/* Main content area */}
           <div className={`flex-1 ${
-            darkMode ? 'bg-gray-800/80 backdrop-blur-sm' : 'bg-white'
-          } rounded-xl shadow-lg p-6 transition-all duration-300`}>
+            darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+          } rounded-3xl shadow-lg p-6 transition-all duration-300`}>
             {children}
           </div>
         </div>

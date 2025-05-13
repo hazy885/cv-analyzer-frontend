@@ -1,54 +1,51 @@
-// src/components/settings/ui/ToggleSwitch.tsx
 import React from 'react';
 
 interface ToggleSwitchProps {
   checked: boolean;
   onChange: () => void;
-  label?: string;
+  label: string;
   description?: string;
   darkMode: boolean;
-  id?: string;
+  id: string;
 }
 
-const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ 
-  checked, 
-  onChange, 
-  label, 
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
+  checked,
+  onChange,
+  label,
   description,
   darkMode,
   id
 }) => {
-  // Generate a random ID if one isn't provided
-  const toggleId = id || `toggle-${Math.random().toString(36).substring(2, 9)}`;
-  
   return (
     <div className="flex items-center justify-between py-3">
-      {(label || description) && (
-        <div>
-          {label && (
-            <label htmlFor={toggleId} className="font-medium cursor-pointer">
-              {label}
-            </label>
-          )}
-          {description && (
-            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              {description}
-            </p>
-          )}
-        </div>
-      )}
-      <label className="relative inline-flex items-center cursor-pointer">
-        <input 
-          type="checkbox" 
-          id={toggleId}
-          className="sr-only peer" 
-          checked={checked}
-          onChange={onChange}
+      <div>
+        <label htmlFor={id} className="font-medium cursor-pointer">
+          {label}
+        </label>
+        {description && (
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            {description}
+          </p>
+        )}
+      </div>
+      <button
+        id={id}
+        role="switch"
+        aria-checked={checked}
+        onClick={onChange}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          checked 
+            ? (darkMode ? 'bg-blue-600 focus:ring-blue-500' : 'bg-blue-600 focus:ring-blue-500') 
+            : (darkMode ? 'bg-gray-600 focus:ring-gray-500' : 'bg-gray-300 focus:ring-gray-400')
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform ${
+            checked ? 'translate-x-6' : 'translate-x-1'
+          }`}
         />
-        <div className={`w-11 h-6 rounded-full peer ${
-          darkMode ? 'bg-gray-700' : 'bg-gray-200'
-        } peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500 transition-all duration-200`}></div>
-      </label>
+      </button>
     </div>
   );
 };

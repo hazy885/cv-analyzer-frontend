@@ -1,21 +1,24 @@
-// src/components/settings/ui/SettingsHeader.tsx
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 interface SettingsHeaderProps {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   darkMode: boolean;
 }
 
 const SettingsHeader: React.FC<SettingsHeaderProps> = ({ icon, title, darkMode }) => {
   return (
-    <h2 className="text-xl font-semibold mb-6 flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-      {React.cloneElement(icon as React.ReactElement, { 
-        size: 20, 
-        className: "text-blue-500" 
-      })}
-      <span>{title}</span>
-    </h2>
+    <div className="flex items-center gap-3 mb-6">
+      <div className={`p-2 rounded-full ${
+        darkMode ? 'bg-gray-700' : 'bg-gray-100'
+      }`}>
+        {React.cloneElement(icon as React.ReactElement, { 
+          size: 24,
+          className: darkMode ? 'text-blue-400' : 'text-blue-600'
+        })}
+      </div>
+      <h2 className="text-xl font-medium">{title}</h2>
+    </div>
   );
 };
 

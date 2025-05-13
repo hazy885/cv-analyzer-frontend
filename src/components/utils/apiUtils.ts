@@ -43,14 +43,18 @@ export const apiFetch = async <T>(
 };
 
 // Utility for file uploads with progress tracking
-export const uploadFiles = (
+export const uploadFiles = async <T>(
   url: string, 
   files: File[], 
   onProgress?: (progress: number) => void
-): Promise<Response> => {
+): Promise<{ data?: T; error?: string }> => {
   return new Promise((resolve, reject) => {
     const formData = new FormData();
-    files.forEach(file => formData.append('files', file));
+    
+    // Add files with the standard name
+    files.forEach(file => {
+      formData.append('file', file);
+    });
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', url, true);
@@ -65,16 +69,70 @@ export const uploadFiles = (
 
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(new Response(xhr.responseText));
+        try {
+          const data = JSON.parse(xhr.responseText);
+          resolve({ data });
+        } catch (error) {
+          resolve({ data: xhr.responseText as unknown as T });
+        }
       } else {
-        reject(new Error(`HTTP error! status: ${xhr.status}`));
+        reject({ error: `HTTP error! status: ${xhr.status}` });
       }
     };
 
     xhr.onerror = () => {
-      reject(new Error('Network error'));
+      reject({ error: 'Network error' });
     };
 
     xhr.send(formData);
   });
+};
+
+// CV API service
+export const cvApiService = {
+  // Base URL for API
+  baseUrl: 'http://localhost:8000',
+  
+  // Parse LinkedIn profile
+  parseLinkedIn: async (url: string) => {
+    return apiFetch(`${cvApiService.baseUrl}/extract_linkedin`, {
+      method: 'POST',
+      body: { url }
+    });
+  },
+  
+  // Upload and parse CV files (PDF, DOCX, etc.)
+  uploadCV: async (files: File[], onProgress?: (progress: number) => void) => {
+    return uploadFiles(`${cvApiService.baseUrl}/extract_document`, files, onProgress);
+  },
+  
+  // Parse CV from text
+  parseText: async (text: string) => {
+    return apiFetch(`${cvApiService.baseUrl}/extract_text`, {
+      method: 'POST',
+      body: { text }
+    });
+  },
+  
+  // Get all parsed CVs
+  getAllCVs: async () => {
+    return apiFetch(`${cvApiService.baseUrl}/cvs`, {
+      method: 'GET'
+    });
+  },
+  
+  // Get a specific CV by ID
+  getCV: async (id: string) => {
+    return apiFetch(`${cvApiService.baseUrl}/cv/${id}`, {
+      method: 'GET'
+    });
+  },
+  
+  // Save parsed CV to database
+  saveCV: async (cvData: any) => {
+    return apiFetch(`${cvApiService.baseUrl}/save_cv`, {
+      method: 'POST',
+      body: cvData
+    });
+  }
 };
